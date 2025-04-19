@@ -1,92 +1,70 @@
+
 import 'package:flutter/material.dart';
-import 'package:my_commerce/texto.dart';
-import 'package:my_commerce/produto.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:my_commerce/cadastro.dart';
+import 'package:my_commerce/home.dart';
+import 'package:my_commerce/newpage.dart';
+import 'package:my_commerce/produtosPage.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
-class MyApp extends StatefulWidget {
+class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
+  // This widget is the root of your application.
   @override
-  State<MyApp> createState() => _MyAppState();
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Flutter Demo',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueAccent),
+      ),
+      home: const MyHomePage(title: 'Meu app'),
+    );
+  }
 }
 
-class _MyAppState extends State<MyApp> {
-  int contagem = 1;
-  Future<Produto> produtosFuture = getProdutos();
-  Future<String> prodFuture = Produto.produtoE();
-  static Future<Produto> getProdutos() async {
-    var url = Uri.parse("http://192.168.15.79:8000/api/produto/1");
-    final response = await http.get(url);
-    if (response.statusCode == 200) {
-      return Produto.fromJson(
-        jsonDecode(response.body) as Map<String, dynamic>,
-      );
-    } else {
-      throw Exception('Não foi possivel carregar');
-    }
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key, required this.title});
+  final String title;
+
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  int _indice = 0;
+  final List<Widget> _telas = [
+    Home(),
+    ProdutosPage(),
+    NewPageScreen("Vendas")
+  ];
+  void onTapped(int index) {
+    setState(() {
+      _indice = index;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.blue,
-          title: Text('Meu primeiro app'),
-        ),
-        body: Center(
-          child: FutureBuilder<Produto>(
-            future: produtosFuture,
-            builder: (context, AsyncSnapshot snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const CircularProgressIndicator();
-              } else if (snapshot.hasData) {
-                final produto = snapshot.data!;
-                return Text("${produto.nome}");
-              } else {
-                return const Text("Sem dados.");
-              }
-            },
-          ),
-        ),
-        floatingActionButton: FloatingActionButton(
-          backgroundColor: Colors.blue,
-          onPressed: () {
-            setState(() {
-              contagem++;
-            });
-          },
-          child: Icon(Icons.add),
-        ),
-        bottomNavigationBar: BottomNavigationBar(
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home, color: Colors.blue),
-              label: 'Início',
-              backgroundColor: Colors.blue,
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.business),
-              label: 'Produtos',
-            ),
-          ],
-        ),
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: Text(widget.title),
       ),
-    );
-  }
+      body: _telas[_indice],
 
-  Widget buildProdutos(List<Produto> produtos) {
-    return ListView.builder(
-      itemCount: produtos.length,
-      itemBuilder: (context, index) {
-        final produto = produtos[index];
-        return Container(child: Row(children: [Text(produto.nome!)]));
-      },
+      bottomNavigationBar: BottomNavigationBar(
+        //type: BottomNavigationBarType.fixed,
+        currentIndex: _indice,
+        onTap: onTapped,
+        items: [
+          BottomNavigationBarItem(icon: Icon(Icons.house), label: 'Inicio'),
+          BottomNavigationBarItem(icon: Icon(Icons.shopping_basket), label: 'Produtos'),
+          BottomNavigationBarItem(icon: Icon(Icons.point_of_sale), label: 'Vendas')
+        ],
+      ),
     );
   }
 }
